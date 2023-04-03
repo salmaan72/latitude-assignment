@@ -11,6 +11,7 @@ func (h *HTTP) InitializeRoutes() {
 	router := h.ginEngine.Group("/")
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	// auth middleware
 	router.Use(middleware.TokenAuthMiddleware())
 
 	router.GET("/myinfo", h.API.MyInfo)
