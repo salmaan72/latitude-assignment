@@ -45,7 +45,6 @@ func (api *API) Login(c *gin.Context) {
 	cookie.Value = tokenDetails.AccessToken
 	cookie.Expires = time.Now().Add(time.Second * 120)
 	cookie.HttpOnly = true
-	cookie.Secure = true
 	cookie.Path = "/"
 	http.SetCookie(c.Writer, &cookie)
 
