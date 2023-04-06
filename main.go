@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/go-redis/redis"
 	"github.com/salmaan72/latitude-assignment/internal/api"
 	"github.com/salmaan72/latitude-assignment/internal/auth"
-	redisService "github.com/salmaan72/latitude-assignment/internal/clients/redis"
+	"github.com/salmaan72/latitude-assignment/internal/clients"
 	"github.com/salmaan72/latitude-assignment/internal/configs"
 	"github.com/salmaan72/latitude-assignment/internal/ledger"
 	"github.com/salmaan72/latitude-assignment/internal/server"
@@ -14,13 +13,13 @@ import (
 	"github.com/salmaan72/latitude-assignment/internal/user"
 )
 
-func initAPIService(cfgHandler *configs.Config, redisClient *redis.Client) (*api.API, error) {
+func initAPIService(cfgHandler *configs.Config, clients *clients.Service) (*api.API, error) {
 	userService, err := user.NewService()
 	if err != nil {
 		return nil, err
 	}
 
-	authService := auth.NewAuthService(redisClient)
+	authService := auth.NewAuthService(clients.RedisClient)
 
 	ledgerService := ledger.NewService()
 
@@ -35,14 +34,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	redisService := redisService.NewService(cfgHandler.Redis())
-
-	apiService, err := initAPIService(cfgHandler, redisService.RedisClient)
+	clients, err := clients.NewService(cfgHandler.Redis(), cfgHandler.Datastore())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	httpServer, err := http.NewHTTPServer(cfgHandler.HTTP(), redisService.RedisClient, apiService)
+	// postgres, err := pos
+
+	apiService, err := initAPIService(cfgHandler, clients)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	httpServer, err := http.NewHTTPServer(cfgHandler.HTTP(), clients.RedisClient, apiService)
 	if err != nil {
 		log.Fatal(err)
 	}

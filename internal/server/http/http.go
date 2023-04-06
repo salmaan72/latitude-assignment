@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
 	"github.com/salmaan72/latitude-assignment/internal/api"
 	"github.com/salmaan72/latitude-assignment/internal/auth"
+	"github.com/salmaan72/latitude-assignment/internal/clients/cachestore"
 )
 
 type HTTP struct {
 	config      *Config
 	ginEngine   *gin.Engine
-	redisClient *redis.Client
+	redisClient *cachestore.Client
 	Redis       auth.Auth
 	TK          auth.Token
 	API         *api.API
@@ -41,7 +41,7 @@ func (h *HTTP) ListenAndServe() error {
 	return nil
 }
 
-func NewHTTPServer(config *Config, redisClient *redis.Client, api *api.API) (*HTTP, error) {
+func NewHTTPServer(config *Config, redisClient *cachestore.Client, api *api.API) (*HTTP, error) {
 	ginEngine, err := newGinEngine()
 	if err != nil {
 		return nil, err

@@ -8,8 +8,8 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
 	"github.com/salmaan72/latitude-assignment/internal/auth"
+	"github.com/salmaan72/latitude-assignment/internal/clients/cachestore"
 )
 
 func TokenAuthMiddleware() gin.HandlerFunc {
@@ -24,7 +24,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func AuthoriseUserLedger(redisClient *redis.Client) gin.HandlerFunc {
+func AuthoriseUserLedger(redisClient *cachestore.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Request.URL.Query().Get("userID")
 
