@@ -3,7 +3,7 @@ package auth
 import (
 	"errors"
 
-	"github.com/go-redis/redis"
+	"github.com/salmaan72/latitude-assignment/internal/clients/cachestore"
 )
 
 type AccessDetails struct {
@@ -25,7 +25,7 @@ type Auth interface {
 }
 
 type Service struct {
-	redisClient *redis.Client
+	redisClient *cachestore.Client
 }
 
 // Save token metadata to Redis
@@ -67,6 +67,6 @@ func (s *Service) DeleteTokens(ad *AccessDetails) error {
 	return nil
 }
 
-func NewAuthService(client *redis.Client) *Service {
+func NewAuthService(client *cachestore.Client) *Service {
 	return &Service{redisClient: client}
 }
