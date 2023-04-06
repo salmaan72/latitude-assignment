@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -38,4 +39,11 @@ func NewClient(config *Config) (*Client, error) {
 	}
 
 	return &Client{datastoreClient}, nil
+}
+
+type Model struct {
+	ID        uuid.UUID `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
