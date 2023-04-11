@@ -32,10 +32,10 @@ type Ledger struct {
 }
 
 type Card struct {
-	Type   cardType
-	Number string
-	CVV    string
-	Expiry *time.Time
+	Type   cardType   `json:"type,omitempty"`
+	Number string     `json:"number,omitempty"`
+	CVV    string     `json:"cvv,omitempty"`
+	Expiry *time.Time `json:"expiry,omitempty"`
 }
 
 func (l *Ledger) fetchFromModelsBasic(lm *LedgerModel) {
