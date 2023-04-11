@@ -38,8 +38,8 @@ func (h *HTTP) InitializeRoutes() {
 	// auth middleware
 	router.Use(middleware.TokenAuthMiddleware())
 
-	router.POST("/verify", h.API.Verify)
-	router.GET("/myinfo", h.API.MyInfo)
+	router.POST("/user/verify", h.API.Verify)
+	router.GET("/user", h.API.MyInfo)
 	router.GET("/dashboard", middleware.AuthoriseUserLedger(h.redisClient), h.API.FetchUserLedger)
 
 }

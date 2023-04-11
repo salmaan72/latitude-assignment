@@ -24,6 +24,7 @@ func (api *API) Verify(c *gin.Context) {
 
 	comType := c.Request.URL.Query().Get("type")
 	otp := c.Request.URL.Query().Get("otp")
+
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())

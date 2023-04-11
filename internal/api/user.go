@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/salmaan72/latitude-assignment/internal/user"
 
 	"github.com/gin-gonic/gin"
@@ -64,25 +65,45 @@ func (api *API) Login(c *gin.Context) {
 }
 
 func (api *API) MyInfo(c *gin.Context) {
-	// accessDetails, err := api.AuthService.ExtractTokenMetadata(c.Request)
-	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, err.Error())
-	// 	return
-	// }
+	accessDetails, err := api.AuthService.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, err.Error())
+		return
+	}
 
-	// userID, err := api.AuthService.FetchAuth(accessDetails.TokenUUID)
-	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, err.Error())
-	// 	return
-	// }
+	userID, err := api.AuthService.FetchAuth(accessDetails.TokenUUID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, err.Error())
+		return
+	}
 
-	// ledger, err := api.LedgerService.Read(userID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, err.Error())
-	// 	return
-	// }
+	ctx := c.Request.Context()
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	userDetails, err := api.UserService.Read(ctx, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if userDetails.Status != user.StatusApproved {
+		c.JSON(http.StatusInternalServerError, "user is not verified. verify email and otp to gain access")
+		return
+	}
 
-	// c.JSON(http.StatusOK, ledger)
+	ledgerDetails, err := api.LedgerService.ReadByUserID(ctx, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respMap := map[string]interface{}{
+		"user":   userDetails,
+		"ledger": ledgerDetails,
+	}
+	c.JSON(http.StatusOK, respMap)
 }
 
 func (api *API) Signup(c *gin.Context) {
