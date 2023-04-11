@@ -43,13 +43,13 @@ type CardModel struct {
 	Expiry   *time.Time
 }
 
-func (cm *CardModel) prepare(ledgerID uuid.UUID, card *Card) {
+func (cm *CardModel) prepare(lm *LedgerModel, card *Card) {
 	cm.ID = uuid.New()
 	now := time.Now()
 	cm.CreatedAt = &now
 	cm.UpdatedAt = &now
 
-	cm.LedgerID = ledgerID
+	cm.LedgerID = lm.ID
 	cm.Type = string(card.Type)
 	cm.Number = card.Number
 	cm.CVV = card.CVV
@@ -68,7 +68,7 @@ func (nls *newLedgerStore) Create(ctx context.Context, ledger *Ledger) error {
 	for _, c := range ledger.Cards {
 		cm := &CardModel{}
 		copy := c
-		cm.prepare(ledger.ID, &copy)
+		cm.prepare(lm, &copy)
 
 		cardModelList = append(cardModelList, *cm)
 	}

@@ -53,12 +53,12 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 		return nil, err
 	}
 
-	// _, err = s.ledgerService.Create(ctx, &ledger.Ledger{
-	// 	UserID: u.ID,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
+	_, err = s.ledgerService.Create(ctx, &ledger.Ledger{
+		UserID: u.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return u, nil
 }

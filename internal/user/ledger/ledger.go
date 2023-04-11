@@ -32,10 +32,10 @@ type Ledger struct {
 }
 
 type Card struct {
-	Type   cardType   `json:"type,omitempty"`
-	Number string     `json:"number,omitempty"`
-	CVV    string     `json:"cvv,omitempty"`
-	Expiry *time.Time `json:"expiry,omitempty"`
+	Type   cardType
+	Number string
+	CVV    string
+	Expiry *time.Time
 }
 
 func (l *Ledger) fetchFromModelsBasic(lm *LedgerModel) {
@@ -48,6 +48,7 @@ func (s *Service) Create(ctx context.Context, ledger *Ledger) (*Ledger, error) {
 	now := time.Now()
 	expiry := now.AddDate(1, 0, 0)
 
+	rand.Seed(time.Now().Unix())
 	ledger.AccountNumber = fmt.Sprintf("%016d", rand.Int63n(1e16))
 	ledger.CurrentBalance = int64(0)
 	ledger.Cards = []Card{
