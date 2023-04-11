@@ -18,11 +18,7 @@ type Token interface {
 
 func (s *Service) CreateToken(userID, username string) (*TokenDetails, error) {
 	td := &TokenDetails{}
-	if username == "admin" {
-		td.ExpiresAt = time.Now().Add(time.Hour * 12).Unix() //expires after 12 hours
-	} else {
-		td.ExpiresAt = time.Now().Add(time.Second * 100).Unix() //expires after 100 sec
-	}
+	td.ExpiresAt = time.Now().Add(time.Second * 100).Unix() //expires after 100 sec
 
 	td.TokenUUID = uuid.New().String()
 
