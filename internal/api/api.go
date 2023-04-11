@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/salmaan72/latitude-assignment/internal/auth"
-	"github.com/salmaan72/latitude-assignment/internal/ledger"
 	"github.com/salmaan72/latitude-assignment/internal/user"
+	"github.com/salmaan72/latitude-assignment/internal/user/ledger"
 )
 
 type API struct {

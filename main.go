@@ -3,26 +3,28 @@ package main
 import (
 	"log"
 
-	"github.com/go-redis/redis"
 	"github.com/salmaan72/latitude-assignment/internal/api"
 	"github.com/salmaan72/latitude-assignment/internal/auth"
-	redisService "github.com/salmaan72/latitude-assignment/internal/clients/redis"
+	"github.com/salmaan72/latitude-assignment/internal/clients"
 	"github.com/salmaan72/latitude-assignment/internal/configs"
-	"github.com/salmaan72/latitude-assignment/internal/ledger"
 	"github.com/salmaan72/latitude-assignment/internal/server"
 	"github.com/salmaan72/latitude-assignment/internal/server/http"
 	"github.com/salmaan72/latitude-assignment/internal/user"
+	"github.com/salmaan72/latitude-assignment/internal/user/ledger"
 )
 
-func initAPIService(cfgHandler *configs.Config, redisClient *redis.Client) (*api.API, error) {
-	userService, err := user.NewService()
+func initAPIService(cfgHandler *configs.Config, clients *clients.Service) (*api.API, error) {
+	ledgerService, err := ledger.NewService(clients.DatastoreClient)
 	if err != nil {
 		return nil, err
 	}
 
-	authService := auth.NewAuthService(redisClient)
+	userService, err := user.NewService(clients.DatastoreClient, ledgerService)
+	if err != nil {
+		return nil, err
+	}
 
-	ledgerService := ledger.NewService()
+	authService := auth.NewAuthService(clients.RedisClient)
 
 	apiService := api.New(userService, authService, ledgerService)
 
@@ -35,14 +37,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	redisService := redisService.NewService(cfgHandler.Redis())
-
-	apiService, err := initAPIService(cfgHandler, redisService.RedisClient)
+	clients, err := clients.NewService(cfgHandler.Redis(), cfgHandler.Datastore())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	httpServer, err := http.NewHTTPServer(cfgHandler.HTTP(), redisService.RedisClient, apiService)
+	// postgres, err := pos
+
+	apiService, err := initAPIService(cfgHandler, clients)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	httpServer, err := http.NewHTTPServer(cfgHandler.HTTP(), clients.RedisClient, apiService)
 	if err != nil {
 		log.Fatal(err)
 	}

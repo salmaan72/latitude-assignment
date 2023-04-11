@@ -1,88 +1,89 @@
 package user
 
 import (
-	"errors"
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/salmaan72/latitude-assignment/internal/clients/datastore"
 )
 
 type store interface {
-	Read(id string, u *User) error
-	ReadByUsername(username string, u *User) error
+	Create(ctx context.Context, u *User) error
 }
 
-type mockStore struct{}
-
-var users = []User{
-	{
-		ID:       "1",
-		Username: "salmaan",
-		Password: "pass1",
-	},
-	{
-		ID:       "2",
-		Username: "ayshu",
-		Password: "pass2",
-	},
-	{
-		ID:       "9",
-		Username: "admin",
-		Password: "adminpass",
-	},
+type newUserStore struct {
+	db *datastore.Client
 }
 
-func (ms *mockStore) Read(id string, u *User) error {
-	user, err := findByID(id)
+type UserModel struct {
+	datastore.Model
+	Username string
+	Email    string
+	Phone    string
+	Status   status
+}
+
+func (um *UserModel) prepare(u *User) {
+	um.Username = u.Username
+	um.Email = u.Email
+	um.Phone = u.Phone
+	um.Status = StatusPending
+
+	um.ID = uuid.New()
+	now := time.Now()
+	um.CreatedAt = &now
+	um.UpdatedAt = &now
+}
+
+type AddressModel struct {
+	datastore.Model
+	Line1   string
+	City    string
+	State   string
+	Country string
+	Pincode string
+	UserID  uuid.UUID
+}
+
+func (am *AddressModel) prepare(um *UserModel, u *User) {
+	am.Line1 = u.Address.Line1
+	am.City = u.Address.City
+	am.State = u.Address.State
+	am.Country = u.Address.Country
+	am.Pincode = u.Address.Pincode
+	am.UserID = um.ID
+
+	am.ID = uuid.New()
+	now := time.Now()
+	am.CreatedAt = &now
+	am.UpdatedAt = &now
+}
+
+func (nus *newUserStore) Create(ctx context.Context, user *User) error {
+	um := &UserModel{}
+	um.prepare(user)
+
+	am := &AddressModel{}
+	am.prepare(um, user)
+
+	err := nus.db.Create(um).Error
 	if err != nil {
 		return err
 	}
 
-	*u = *user
-
-	return nil
-}
-
-func (ms *mockStore) ReadByUsername(username string, u *User) error {
-	user, err := findByUsername(username)
+	err = nus.db.Create(am).Error
 	if err != nil {
 		return err
 	}
 
-	*u = *user
+	user.fetchFromModelsBasic(um, am)
 
 	return nil
 }
 
-func findByID(id string) (*User, error) {
-	user := new(User)
-	for _, u := range users {
-		if u.ID == id {
-			*user = u
-			break
-		}
-	}
-
-	if user.ID == "" {
-		return nil, errors.New("no user found")
-	}
-
-	return user, nil
-}
-
-func findByUsername(username string) (*User, error) {
-	user := new(User)
-	for _, u := range users {
-		if u.Username == username {
-			*user = u
-			break
-		}
-	}
-
-	if user.Username == "" {
-		return nil, errors.New("no user found")
-	}
-
-	return user, nil
-}
-
-func newStore() (*mockStore, error) {
-	return &mockStore{}, nil
+func newStore(db *datastore.Client) (*newUserStore, error) {
+	return &newUserStore{
+		db: db,
+	}, nil
 }
