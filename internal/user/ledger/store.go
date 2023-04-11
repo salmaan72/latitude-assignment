@@ -10,6 +10,7 @@ import (
 
 type store interface {
 	Create(ctx context.Context, ledger *Ledger) error
+	ReadByUserID(ctx context.Context, userID uuid.UUID, ledger *Ledger) error
 }
 
 type newLedgerStore struct {
@@ -81,6 +82,38 @@ func (nls *newLedgerStore) Create(ctx context.Context, ledger *Ledger) error {
 	ledger.fetchFromModelsBasic(lm)
 
 	return nil
+}
+
+func (nls *newLedgerStore) ReadByUserID(ctx context.Context, userID uuid.UUID, ledger *Ledger) error {
+	ledgerModel := &LedgerModel{}
+	err := nls.db.Where("user_id=?", userID.String()).Find(ledgerModel).Error
+	if err != nil {
+		return err
+	}
+
+	cardModel := &CardModel{}
+	err = nls.db.Where("ledger_id=?", ledgerModel.ID.String()).Find(cardModel).Error
+	if err != nil {
+		return err
+	}
+
+	modelToStruct(ledger, ledgerModel, cardModel)
+	return nil
+}
+
+func modelToStruct(l *Ledger, ledgerModel *LedgerModel, cardModel *CardModel) {
+	l.ID = ledgerModel.ID
+	l.UserID = ledgerModel.UserID
+	l.AccountNumber = ledgerModel.AccountNumber
+	l.CurrentBalance = ledgerModel.CurrentBalance
+	l.Cards = []Card{
+		{
+			Type:   cardType(cardModel.Type),
+			Number: cardModel.Number,
+			CVV:    cardModel.CVV,
+			Expiry: cardModel.Expiry,
+		},
+	}
 }
 
 func newStore(db *datastore.Client) (*newLedgerStore, error) {

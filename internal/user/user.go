@@ -120,6 +120,16 @@ func (s *Service) VerifyUser(ctx context.Context, userID uuid.UUID, commType, ot
 	return u, nil
 }
 
+func (s *Service) Read(ctx context.Context, id uuid.UUID) (*User, error) {
+	u := &User{}
+	err := s.store.Read(ctx, id, u)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func NewService(db *datastore.Client, ledgerService *ledger.Service, verifierService *verifier.Service) (*Service, error) {
 	nstore, err := newStore(db)
 	if err != nil {

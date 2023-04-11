@@ -94,9 +94,11 @@ func structToModel(v *Verifier, model *VerifierModel) {
 	v.UserID = model.UserID
 	v.Password = model.Password
 	v.Email = &VerificationDetails{
+		OTP:        model.EmailOTP,
 		IsVerified: model.IsEmailVerified,
 	}
 	v.Phone = &VerificationDetails{
+		OTP:        model.PhoneOTP,
 		IsVerified: model.IsPhoneVerified,
 	}
 	v.CreatedAt = model.CreatedAt

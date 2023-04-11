@@ -25,7 +25,7 @@ type Ledger struct {
 	ID             uuid.UUID  `json:"id,omitempty"`
 	UserID         uuid.UUID  `json:"userID,omitempty"`
 	AccountNumber  string     `json:"accountNumber,omitempty"`
-	CurrentBalance int64      `json:"currentBalance,omitempty"`
+	CurrentBalance int64      `json:"currentBalance"`
 	Cards          []Card     `json:"cards,omitempty"`
 	CreatedAt      *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
@@ -61,6 +61,16 @@ func (s *Service) Create(ctx context.Context, ledger *Ledger) (*Ledger, error) {
 	}
 
 	err := s.store.Create(ctx, ledger)
+	if err != nil {
+		return nil, err
+	}
+
+	return ledger, nil
+}
+
+func (s *Service) ReadByUserID(ctx context.Context, userID uuid.UUID) (*Ledger, error) {
+	ledger := &Ledger{}
+	err := s.store.ReadByUserID(ctx, userID, ledger)
 	if err != nil {
 		return nil, err
 	}
