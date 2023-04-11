@@ -22,26 +22,26 @@ var (
 )
 
 type Ledger struct {
-	ID             uuid.UUID `json:"id,omitempty"`
-	UserID         uuid.UUID `json:"userID,omitempty"`
-	AccountNumber  string
-	CurrentBalance int64
-	Cards          []Card
-	CreatedAt      *time.Time
-	UpdatedAt      *time.Time
+	ID             uuid.UUID  `json:"id,omitempty"`
+	UserID         uuid.UUID  `json:"userID,omitempty"`
+	AccountNumber  string     `json:"accountNumber,omitempty"`
+	CurrentBalance int64      `json:"currentBalance,omitempty"`
+	Cards          []Card     `json:"cards,omitempty"`
+	CreatedAt      *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt      *time.Time `json:"updatedAt,omitempty"`
 }
 
 type Card struct {
-	Type   cardType
-	Number string
-	CVV    string
-	Expiry *time.Time
+	Type   cardType   `json:"type,omitempty"`
+	Number string     `json:"number,omitempty"`
+	CVV    string     `json:"cvv,omitempty"`
+	Expiry *time.Time `json:"expiry,omitempty"`
 }
 
 func (l *Ledger) fetchFromModelsBasic(lm *LedgerModel) {
 	l.ID = lm.ID
-	l.CreatedAt = &lm.CreatedAt
-	l.UpdatedAt = &lm.UpdatedAt
+	l.CreatedAt = lm.CreatedAt
+	l.UpdatedAt = lm.UpdatedAt
 }
 
 func (s *Service) Create(ctx context.Context, ledger *Ledger) (*Ledger, error) {
