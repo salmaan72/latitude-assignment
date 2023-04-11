@@ -1,4 +1,4 @@
-CREATE TYPE status AS ENUM ('approved', 'pending');
+CREATE TYPE status AS ENUM ('approved', 'pending', 'email_verified', 'phone_verified');
 CREATE TABLE IF NOT EXISTS User_models(
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
