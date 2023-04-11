@@ -7,18 +7,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/salmaan72/latitude-assignment/internal/clients/datastore"
 	"github.com/salmaan72/latitude-assignment/internal/user/ledger"
+	"github.com/salmaan72/latitude-assignment/internal/verifier"
 )
 
 type Service struct {
-	store         store
-	ledgerService *ledger.Service
+	store           store
+	ledgerService   *ledger.Service
+	verifierService *verifier.Service
 }
 
 type status string
 
 var (
-	StatusPending  = status("pending")
-	StatusApproved = status("approved")
+	StatusPending       = status("pending")
+	StatusApproved      = status("approved")
+	StatusEmailVerified = status("email_verified")
+	StatusPhoneVerified = status("phone_verified")
 )
 
 type User struct {
@@ -27,9 +31,11 @@ type User struct {
 	Email     string     `json:"email,omitempty"`
 	Phone     string     `json:"phone,omitempty"`
 	Address   *Address   `json:"address,omitempty"`
-	Status    *status    `json:"status,omitempty"`
+	Status    status     `json:"status,omitempty"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+
+	Password string `json:"password,omitempty"`
 }
 
 type Address struct {
@@ -40,11 +46,16 @@ type Address struct {
 	Pincode string `json:"pincode,omitempty"`
 }
 
+type Login struct {
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
 func (u *User) fetchFromModelsBasic(um *UserModel, am *AddressModel) {
 	u.ID = um.ID
 	u.CreatedAt = um.CreatedAt
 	u.UpdatedAt = um.UpdatedAt
-	u.Status = &um.Status
+	u.Status = um.Status
 }
 
 func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
@@ -60,37 +71,64 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 		return nil, err
 	}
 
+	_, err = s.verifierService.CreateDefaults(ctx, &verifier.Verifier{
+		UserID:   u.ID,
+		Password: s.verifierService.PassHash([]byte(u.Password)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return u, nil
 }
 
-// func (s *Service) Read(id string) (*User, error) {
-// 	user := &User{}
-// 	err := s.store.Read(id, user)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *Service) ReadByEmail(ctx context.Context, email string) (*User, error) {
+	u := &User{}
+	err := s.store.ReadByEmail(ctx, email, u)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return user, nil
-// }
+	return u, nil
+}
 
-// func (s *Service) ReadByUsername(username string) (*User, error) {
-// 	user := &User{}
-// 	err := s.store.ReadByUsername(username, user)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *Service) VerifyUser(ctx context.Context, userID uuid.UUID, commType, otp string) (*User, error) {
+	verifier, err := s.verifierService.Verify(ctx, userID, commType, otp)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return user, nil
-// }
+	if verifier.Email.IsVerified && verifier.Phone.IsVerified {
+		// approved status
+		err = s.store.Update(ctx, userID, StatusApproved)
+	} else if verifier.Email.IsVerified && commType == "email" {
+		// email_verifier status
+		err = s.store.Update(ctx, userID, StatusEmailVerified)
+	} else if verifier.Phone.IsVerified && commType == "phone" {
+		// phone_verified status
+		err = s.store.Update(ctx, userID, StatusPhoneVerified)
+	}
+	if err != nil {
+		return nil, err
+	}
 
-func NewService(db *datastore.Client, ledgerService *ledger.Service) (*Service, error) {
+	u := &User{}
+	err = s.store.Read(ctx, userID, u)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func NewService(db *datastore.Client, ledgerService *ledger.Service, verifierService *verifier.Service) (*Service, error) {
 	nstore, err := newStore(db)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Service{
-		store:         nstore,
-		ledgerService: ledgerService,
+		store:           nstore,
+		ledgerService:   ledgerService,
+		verifierService: verifierService,
 	}, nil
 }

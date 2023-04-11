@@ -3,56 +3,65 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/salmaan72/latitude-assignment/internal/user"
 
 	"github.com/gin-gonic/gin"
 )
 
-// func (api *API) Login(c *gin.Context) {
-// 	login := user.User{}
-// 	err := json.NewDecoder(c.Request.Body).Decode(&login)
-// 	if err != nil {
-// 		return
-// 	}
+func (api *API) Login(c *gin.Context) {
+	login := user.Login{}
+	err := json.NewDecoder(c.Request.Body).Decode(&login)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, "invalid format")
+		return
+	}
 
-// 	//find user with username
-// 	user, err := api.UserService.ReadByUsername(login.Username)
-// 	if err != nil {
-// 		c.JSON(http.StatusUnauthorized, "Please provide valid login details")
-// 		return
-// 	}
-// 	//compare the user from the request, with the one we defined:
-// 	if user.Username != login.Username || user.Password != login.Password {
-// 		c.JSON(http.StatusUnauthorized, "Please provide valid login details")
-// 		return
-// 	}
-// 	tokenDetails, err := api.AuthService.CreateToken(user.ID, user.Username)
-// 	if err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, err.Error())
-// 		return
-// 	}
+	ctx := c.Request.Context()
+	user, err := api.UserService.ReadByEmail(ctx, login.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
 
-// 	// save token ib redis
-// 	err = api.AuthService.CreateAuthEntry(user.ID, tokenDetails)
-// 	if err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, err.Error())
-// 	}
+	ver, err := api.VerifierService.ReadByUserID(ctx, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	hashed := api.VerifierService.PassHash([]byte(login.Password))
+	if ver.Password != hashed {
+		c.JSON(http.StatusUnauthorized, "invalid username/password")
+		return
+	}
 
-// 	// set cookie
-// 	cookie := http.Cookie{}
-// 	cookie.Name = "accesstoken"
-// 	cookie.Value = tokenDetails.AccessToken
-// 	cookie.Expires = time.Now().Add(time.Second * 120)
-// 	cookie.HttpOnly = true
-// 	cookie.Path = "/"
-// 	http.SetCookie(c.Writer, &cookie)
+	tokenDetails, err := api.AuthService.CreateToken(user.ID.String(), user.Username)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
+		return
+	}
 
-// 	tokens := map[string]string{
-// 		"access_token": tokenDetails.AccessToken,
-// 	}
-// 	c.JSON(http.StatusOK, tokens)
-// }
+	// save token ib redis
+	err = api.AuthService.CreateAuthEntry(user.ID.String(), tokenDetails)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	// set cookie
+	cookie := http.Cookie{}
+	cookie.Name = "accesstoken"
+	cookie.Value = tokenDetails.AccessToken
+	cookie.Expires = time.Now().Add(time.Second * 120)
+	cookie.HttpOnly = true
+	cookie.Path = "/"
+	http.SetCookie(c.Writer, &cookie)
+
+	tokens := map[string]string{
+		"access_token": tokenDetails.AccessToken,
+	}
+	c.JSON(http.StatusOK, tokens)
+}
 
 func (api *API) MyInfo(c *gin.Context) {
 	// accessDetails, err := api.AuthService.ExtractTokenMetadata(c.Request)

@@ -11,6 +11,7 @@ import (
 	"github.com/salmaan72/latitude-assignment/internal/server/http"
 	"github.com/salmaan72/latitude-assignment/internal/user"
 	"github.com/salmaan72/latitude-assignment/internal/user/ledger"
+	"github.com/salmaan72/latitude-assignment/internal/verifier"
 )
 
 func initAPIService(cfgHandler *configs.Config, clients *clients.Service) (*api.API, error) {
@@ -19,14 +20,19 @@ func initAPIService(cfgHandler *configs.Config, clients *clients.Service) (*api.
 		return nil, err
 	}
 
-	userService, err := user.NewService(clients.DatastoreClient, ledgerService)
+	verifierService, err := verifier.NewService(clients.DatastoreClient)
+	if err != nil {
+		return nil, err
+	}
+
+	userService, err := user.NewService(clients.DatastoreClient, ledgerService, verifierService)
 	if err != nil {
 		return nil, err
 	}
 
 	authService := auth.NewAuthService(clients.RedisClient)
 
-	apiService := api.New(userService, authService, ledgerService)
+	apiService := api.New(userService, authService, ledgerService, verifierService)
 
 	return apiService, nil
 

@@ -10,6 +10,9 @@ import (
 
 type store interface {
 	Create(ctx context.Context, u *User) error
+	ReadByEmail(ctx context.Context, email string, u *User) error
+	Read(ctx context.Context, id uuid.UUID, u *User) error
+	Update(ctx context.Context, id uuid.UUID, status status) error
 }
 
 type newUserStore struct {
@@ -80,6 +83,49 @@ func (nus *newUserStore) Create(ctx context.Context, user *User) error {
 	user.fetchFromModelsBasic(um, am)
 
 	return nil
+}
+
+func (nus *newUserStore) ReadByEmail(ctx context.Context, email string, u *User) error {
+	userModel := &UserModel{}
+	err := nus.db.Where("email=?", email).Find(userModel).Error
+	if err != nil {
+		return err
+	}
+
+	structToModel(u, userModel)
+	return nil
+}
+
+func (nus *newUserStore) Read(ctx context.Context, id uuid.UUID, u *User) error {
+	userModel := &UserModel{}
+	err := nus.db.Where("id=?", id.String()).Find(userModel).Error
+	if err != nil {
+		return err
+	}
+
+	structToModel(u, userModel)
+	return nil
+}
+
+func (nus *newUserStore) Update(ctx context.Context, id uuid.UUID, status status) error {
+	err := nus.db.Model(&UserModel{}).Where(
+		"id=?", id.String(),
+	).Update(
+		"status", status,
+	).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func structToModel(u *User, model *UserModel) {
+	u.ID = model.ID
+	u.Email = model.Email
+	u.Username = model.Username
+	u.Phone = model.Phone
+	u.Status = model.Status
 }
 
 func newStore(db *datastore.Client) (*newUserStore, error) {
