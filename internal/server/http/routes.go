@@ -31,7 +31,7 @@ func (h *HTTP) routes() []Route {
 
 func (h *HTTP) InitializeRoutes() {
 	// h.ginEngine.POST("/login", h.API.Login)
-
+	h.ginEngine.POST("/auth/signup", h.API.Signup)
 	router := h.ginEngine.Group("/")
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -40,4 +40,5 @@ func (h *HTTP) InitializeRoutes() {
 
 	router.GET("/myinfo", h.API.MyInfo)
 	router.GET("/dashboard", middleware.AuthoriseUserLedger(h.redisClient), h.API.FetchUserLedger)
+
 }

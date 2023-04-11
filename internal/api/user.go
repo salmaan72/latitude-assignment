@@ -1,6 +1,11 @@
 package api
 
 import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/salmaan72/latitude-assignment/internal/user"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -69,4 +74,21 @@ func (api *API) MyInfo(c *gin.Context) {
 	// }
 
 	// c.JSON(http.StatusOK, ledger)
+}
+
+func (api *API) Signup(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user := &user.User{}
+	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	if err != nil {
+		return
+	}
+	created, err := api.UserService.CreateUser(ctx, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, created)
 }
