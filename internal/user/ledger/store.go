@@ -25,8 +25,9 @@ type LedgerModel struct {
 
 func (lm *LedgerModel) prepare(ledger *Ledger) {
 	lm.ID = uuid.New()
-	lm.CreatedAt = time.Now()
-	lm.UpdatedAt = time.Now()
+	now := time.Now()
+	lm.CreatedAt = &now
+	lm.UpdatedAt = &now
 
 	lm.UserID = ledger.UserID
 	lm.AccountNumber = ledger.AccountNumber
@@ -44,8 +45,9 @@ type CardModel struct {
 
 func (cm *CardModel) prepare(ledgerID uuid.UUID, card *Card) {
 	cm.ID = uuid.New()
-	cm.CreatedAt = time.Now()
-	cm.UpdatedAt = time.Now()
+	now := time.Now()
+	cm.CreatedAt = &now
+	cm.UpdatedAt = &now
 
 	cm.LedgerID = ledgerID
 	cm.Type = string(card.Type)

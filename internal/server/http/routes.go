@@ -30,7 +30,7 @@ func (h *HTTP) routes() []Route {
 }
 
 func (h *HTTP) InitializeRoutes() {
-	h.ginEngine.POST("/login", h.API.Login)
+	// h.ginEngine.POST("/login", h.API.Login)
 
 	router := h.ginEngine.Group("/")
 	router.Use(gin.Logger())

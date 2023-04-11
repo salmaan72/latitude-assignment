@@ -43,7 +43,7 @@ func NewClient(config *Config) (*Client, error) {
 
 type Model struct {
 	ID        uuid.UUID `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

@@ -7,21 +7,24 @@ import (
 	"github.com/salmaan72/latitude-assignment/internal/auth"
 	"github.com/salmaan72/latitude-assignment/internal/clients"
 	"github.com/salmaan72/latitude-assignment/internal/configs"
-	"github.com/salmaan72/latitude-assignment/internal/ledger"
 	"github.com/salmaan72/latitude-assignment/internal/server"
 	"github.com/salmaan72/latitude-assignment/internal/server/http"
 	"github.com/salmaan72/latitude-assignment/internal/user"
+	"github.com/salmaan72/latitude-assignment/internal/user/ledger"
 )
 
 func initAPIService(cfgHandler *configs.Config, clients *clients.Service) (*api.API, error) {
-	userService, err := user.NewService()
+	ledgerService, err := ledger.NewService(clients.DatastoreClient)
+	if err != nil {
+		return nil, err
+	}
+
+	userService, err := user.NewService(clients.DatastoreClient, ledgerService)
 	if err != nil {
 		return nil, err
 	}
 
 	authService := auth.NewAuthService(clients.RedisClient)
-
-	ledgerService := ledger.NewService()
 
 	apiService := api.New(userService, authService, ledgerService)
 
